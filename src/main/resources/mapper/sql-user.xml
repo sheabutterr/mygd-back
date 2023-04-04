@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="project.mapper.UserMapper">
+
+	<!-- 로그인 기능 -->
+	<select id="login" parameterType="project.dto.UserDto" resultType="project.dto.UserDto">
+		select user_idx, user_id, user_password, user_name, user_email 
+		  from t_user 
+		 where user_id = #{userId} and user_password = #{userPassword}
+	</select>
+	
+	<!-- UserId로 select -->
+	<select id="selectUserByUserId" parameterType="String" resultType="project.dto.UserDto">
+		select  user_idx, user_id, user_password, user_name, user_email 
+		  from t_user
+		 where user_id = #{userId}		 
+	</select>
+	
+	<!-- UserIdx로 select -->
+	<select id="selectUserByUserIdx" parameterType="int" resultType="project.dto.UserDto">
+		select  user_idx, user_id, user_password, user_name, user_email,
+				u.level_id, level_name, u.class_id, class_name  
+		  from t_user u 
+          left join t_level l
+          on l.level_id = u.level_id
+          left join t_class c
+          on c.class_id = u.class_id 
+		 where user_idx = #{userIdx}		
+		 order by user_idx desc;
+	</select>
+	
+	<!-- 유저 정보 수정 -->
+	<update id="updateUser" parameterType="project.dto.UserDto">
+		update t_user
+		set user_id = #{userId},
+			user_name = #{userName},
+			user_email = #{userEmail}
+			where user_idx=#{userIdx}		
+	</update>
+	
+	<!-- 유저 등록 -->
+	<insert id="registUser" parameterType="project.dto.UserDto">
+		insert into t_user (user_id, user_password, user_name, user_email)
+		values (#{userId}, #{userPassword}, #{userName}, #{userEmail})
+	</insert>	
+	
+	<!-- 레벨 테이블 select -->
+	<select id="selectLevel" resultType="project.dto.UserDto" >
+		select level_id, level_name
+		from t_level
+		order by level_id
+	</select>
+	
+	<!-- 레벨테스트 등록 -->
+	<update id="registLevel" parameterType="project.dto.UserDto">
+		update t_user 
+		set level_id = #{levelId}
+		where user_idx = #{userIdx}
+	</update>
+	
+	<!-- 강의 목록 select -->
+	<select id="selectClass" resultType="project.dto.ClassDto">
+		select class_id, class_name
+		from t_class
+		order by class_id
+	</select>
+		
+	<!-- 수강신청 등록 -->
+	<update id="registClass" parameterType="project.dto.UserDto">
+		update t_user 
+		set class_id = #{classId}
+		where user_idx = #{userIdx}
+	</update>
+	
+</mapper>

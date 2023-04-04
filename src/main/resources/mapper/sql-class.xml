@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="project.mapper.ClassMapper">
+
+	<!-- 커뮤니티 글 5개 뽑아오기 -->
+	<select id="selectFiveComByComId" parameterType="int"
+		resultType="project.dto.BoardDto">
+		select com_id, com_title, com_contents, com_created_id
+		from t_community
+		order by com_id desc
+		limit 5
+	</select>
+
+	<!-- 커뮤니티 리스트 -->
+	<select id="selectComList" resultType="project.dto.BoardDto">
+		select com_id, com_title,
+		com_contents, com_hit_cnt, com_created_id, t.category_id,
+		category_name,
+		date_format(com_created_dt, '%Y-%m-%d') as com_created_dt
+		from t_community as t, t_category as c
+		where com_deleted_yn = 'N'
+		and t.category_id = c.category_id
+		order by com_id desc
+	</select>
+
+	<!-- 카테고리 select -->
+	<select id="selectCategory" resultType="project.dto.BoardDto">
+		select category_id,
+		category_name
+		from t_category
+		order by category_id asc
+	</select>
+
+	<!-- 커뮤니티 글 작성 -->
+	<insert id="insertCom" parameterType="project.dto.BoardDto">
+		insert into t_community (com_title, com_contents, com_created_id,
+		com_created_dt, category_id)
+		values ( #{comTitle}, #{comContents}, #{comCreatedId}, curdate(),
+		#{categoryId})
+		<selectKey keyProperty="comId" resultType="Integer">
+			select
+			last_insert_id();
+		</selectKey>
+	</insert>
+
+	<!-- 커뮤니티 조회수 -->
+	<update id="updateComHitCount" parameterType="int">
+		update t_community
+		set com_hit_cnt = com_hit_cnt + 1
+		where com_id = #{comId}
+	</update>
+
+	<!-- 커뮤니티 디테일 -->
+	<select id="selectComDetail" parameterType="int"
+		resultType="project.dto.BoardDto">
+		select com_id, com_title, com_contents, com_hit_cnt,
+		com_created_id, recommend, category_id,
+		date_format(com_created_dt, '%Y-%m-%d') as com_created_dt
+		from t_community
+		where com_deleted_yn = 'N' and com_id = #{comId}
+	</select>	
+
+	<!-- 커뮤니티 업데이트 -->
+	<update id="updateCom" parameterType="project.dto.BoardDto">
+		update t_community
+		set com_title = #{comTitle},
+		com_contents = #{comContents},
+		com_updated_dt = curdate()
+		where com_id = #{comId}
+	</update>
+
+	<!-- 커뮤니티 글 삭제 -->
+	<delete id="deleteCom" parameterType="int">
+		update t_community
+		set com_deleted_yn = 'Y',
+		com_updated_dt = now()
+		where com_id = #{comId}
+	</delete>
+
+
+	<!-- qna 목록 조회 -->
+	<select id="selectQnaList" resultType="project.dto.BoardDto">
+		SELECT qna_id, qna_title, qna_contents, qna_hit_cnt, qna_created_dt,
+		qna_created_id
+		FROM t_qna
+		WHERE qna_deleted_yn = 'N'
+		ORDER BY qna_id desc
+		LIMIT 10;
+	</select>
+	
+	<!-- 검색 조건과 일치하는 게시물 개수를 조회 -->
+	<select id="selectQnaListCount" resultType="int">
+		SELECT qna_hit_cnt(*)
+		FROM t_qna
+		WHERE qna_deleted_yn = 'N'
+	</select>
+
+	<!-- 검색 조건과 일치하는 게시판 중 offset에서부터 10개만 조회해서 반환 -->
+	<select id="selectQnaListPage" parameterType="int"
+		resultType="project.dto.BoardDto">
+		SELECT qna_id, qna_title, qna_created_id
+		FROM t_qna
+		WHERE qna_deleted_yn = 'N'
+		ORDER BY qna_id desc
+		LIMIT #{offset}, 10
+	</select>
+
+	<!-- qna 작성 -->
+	<insert id="insertQna" parameterType="project.dto.BoardDto">
+		INSERT INTO t_qna ( qna_title, qna_contents, qna_created_dt,
+		qna_created_id )
+		VALUES (#{qnaTitle}, #{qnaContents}, now(), #{qnaCreatedId})
+		<selectKey keyProperty="qnaId" resultType="Integer">
+			select last_insert_id();
+		</selectKey>
+	</insert>
+
+	<!-- 아이디에 맞춰 qna정보 조회 -->
+	<select id="selectQnaByQnaId" parameterType="int"
+		resultType="project.dto.BoardDto">
+		SELECT qna_id, qna_title, qna_contents
+		FROM t_qna
+		WHERE qna_id = #{qnaId}
+	</select>
+
+	<!-- qna 상세 조회 -->
+	<select id="selectQnaDetail" parameterType="int"
+		resultType="project.dto.BoardDto">
+		SELECT qna_id, qna_title, qna_contents, qna_created_dt, qna_created_id,
+		qna_hit_cnt, reply
+		FROM t_qna
+		WHERE qna_deleted_yn = 'N'
+		AND qna_id = #{qnaId}
+	</select>
+
+	<!-- 댓글 작성 -->
+	<update id="updateReply" parameterType="project.dto.BoardDto">
+		update t_qna
+		set reply = #{reply}
+		where qna_id = #{qnaId}
+	</update>
+
+	<!-- qna 조회수 업데이트 -->
+	<update id="updateQnaHitCount" parameterType="int">
+		update t_qna
+		set qna_hit_cnt = qna_hit_cnt + 1
+		where qna_id = #{qnaId}
+	</update>
+
+	<!-- qna 수정 -->
+	<update id="updateQna" parameterType="project.dto.BoardDto">
+		UPDATE t_qna
+		SET qna_title = #{qnaTitle},
+		qna_contents = #{qnaContents},
+		qna_updated_dt = now(),
+		qna_id = qna_id
+		WHERE qna_id = #{qnaId}
+	</update>
+
+	<!-- qna 삭제 -->
+	<delete id="deleteQna" parameterType="int">
+		UPDATE t_qna
+		SET qna_deleted_yn = 'Y',
+		qna_id = qna_id
+		WHERE qna_id = #{qnaId}
+	</delete>
+
+	<!-- 강의 목록 select -->
+	<select id="selectClassList"
+		parameterType="project.dto.ClassDto" resultType="project.dto.ClassDto">
+		select class_id, class_name, class_image, class_lecturer_name, class_period,
+		class_target1, class_target2,
+		class_target3, class_text1, class_text2, class_text3, class_text4, class_number
+		from t_class
+		order by class_id
+	</select>
+
+	<!-- ClassId로 강의 목록 조회 -->
+	<select id="selectClassByClassId"
+		parameterType="project.dto.ClassDto" resultType="project.dto.ClassDto">
+		select class_id, class_name, class_image, class_lecturer_name, class_period,
+		class_target1, class_target2,
+		class_target3, class_text1, class_text2, class_text3, class_text4, class_number
+		from t_class
+		where class_id = #{classId}
+	</select>
+
+
+</mapper>
